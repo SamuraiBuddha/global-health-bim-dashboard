@@ -1,0 +1,33 @@
+.cesium-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Override Cesium's default styles for dark theme */
+.cesium-viewer {
+  font-family: inherit;
+}
+
+.cesium-viewer-toolbar {
+  background: rgba(26, 26, 26, 0.8);
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+.cesium-button {
+  background-color: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+.cesium-button:hover {
+  background-color: #3a3a3a;
+  border-color: #555;
+}
+
+.cesium-viewer-animationContainer,
+.cesium-viewer-timelineContainer {
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid #333;
+}
