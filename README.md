@@ -88,25 +88,61 @@ Data Infrastructure
 
 ## Quick Start
 
+### Prerequisites
+
+1. **Get a Cesium Ion Access Token** (required for 3D terrain and imagery):
+   - Sign up for a free account at [https://cesium.com/ion/tokens](https://cesium.com/ion/tokens)
+   - Create a new token
+   - Keep it handy for the setup process
+
+### Setup Instructions
+
 ```bash
 # Clone the repository
 git clone https://github.com/SamuraiBuddha/global-health-bim-dashboard.git
 cd global-health-bim-dashboard
 
-# Install dependencies
-npm install
-
 # Set up environment variables
 cp .env.example .env
 # Edit .env with your configuration
 
+# IMPORTANT: Add your Cesium Ion token to the frontend environment
+cp src/web/.env.example src/web/.env
+# Edit src/web/.env and add your VITE_CESIUM_ION_TOKEN
+
 # Start infrastructure services
 docker-compose up -d
 
-# Initialize databases
-npm run db:setup
+# Install frontend dependencies
+cd src/web
+npm install
+cd ../..
 
-# Start development server
+# Start development servers
+docker-compose --profile dev up
+```
+
+The application will be available at:
+- Frontend: http://localhost:3000
+- API Gateway: http://localhost:8080
+- Terrain Server (Main): http://localhost:8000
+- Terrain Server (GHM): http://localhost:8083
+
+### Development Mode
+
+To run individual services in development:
+
+```bash
+# Frontend only (with hot reload)
+cd src/web
+npm run dev
+
+# API service
+cd src/services/api
+npm run dev
+
+# Data workers
+cd src/workers
 npm run dev
 ```
 
@@ -146,18 +182,18 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup instructions.
 ```
 global-health-bim-dashboard/
 ├── src/
-│   ├── core/           # Rust core engine
-│   ├── services/       # Microservices
-│   ├── web/           # Frontend application
-│   └── workers/       # Background processing
+│   ├── core/          # Rust core engine
+│   ├── services/      # Microservices
+│   ├── web/          # Frontend application
+│   └── workers/      # Background processing
 ├── data/
-│   ├── schemas/       # Database schemas
-│   ├── migrations/    # Database migrations
-│   └── seeds/         # Sample data
-├── docs/              # Documentation
-├── scripts/           # Utility scripts
-├── tests/             # Test suites
-└── docker/            # Docker configurations
+│   ├── schemas/      # Database schemas
+│   ├── migrations/   # Database migrations
+│   └── seeds/        # Sample data
+├── docs/             # Documentation
+├── scripts/          # Utility scripts
+├── tests/            # Test suites
+└── docker/           # Docker configurations
 ```
 
 ## Integration with self-hosted-ai-starter-kit
