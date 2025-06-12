@@ -1,8 +1,3 @@
-# Docker Compose Override for Development
-# This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
-# Use this for local development settings that shouldn't be committed
-
-version: '3.8'
 
 services:
   # Override PostgreSQL for development
