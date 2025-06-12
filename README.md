@@ -138,6 +138,7 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup instructions.
 - [API Documentation](docs/API.md)
 - [BIM Integration Guide](docs/BIM_INTEGRATION.md)
 - [Visualization Techniques](docs/VISUALIZATION.md)
+- [Docker Setup Guide](docs/DOCKER_SETUP.md) - **NEW**: Integration with self-hosted-ai-starter-kit
 - [Contributing Guide](CONTRIBUTING.md)
 
 ## Project Structure
@@ -158,6 +159,16 @@ global-health-bim-dashboard/
 ├── tests/             # Test suites
 └── docker/            # Docker configurations
 ```
+
+## Integration with self-hosted-ai-starter-kit
+
+This project is configured to work seamlessly with your existing self-hosted-ai-starter-kit setup:
+
+- **Shared Database Connections**: Uses the same PostgreSQL instance with compatible settings
+- **AI Services Integration**: Leverages Ollama, n8n, and Qdrant from your AI stack
+- **Unified Authentication**: Same credentials across both systems
+
+See [Docker Setup Guide](docs/DOCKER_SETUP.md) for detailed integration instructions.
 
 ## Contributing
 
