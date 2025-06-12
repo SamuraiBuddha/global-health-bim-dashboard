@@ -175,15 +175,17 @@ services:
 
   # Cesium Terrain Server - Port 8000
   cesium-terrain:
-    image: cleder/cesium-terrain-server:latest
+    image: geodata/cesium-terrain-server:latest
+    networks: ['demo']
     ports:
-      - "8080:8080"
+      - "8000:8000"
     volumes:
-      - ./path/to/tiles:/data/tilesets/terrain
+      - ./data/terrain:/data/terrain:ro
+    command: --dir /data/terrain --port 8000
 
   # Cesium Terrain Server 2 - Port 8083 for Global Health Model
   cesium-terrain-ghm:
-    image: tumgis/cesium-terrain-server
+    image: geodata/cesium-terrain-server:latest
     container_name: cesium-terrain-ghm
     networks: ['demo']
     ports:
