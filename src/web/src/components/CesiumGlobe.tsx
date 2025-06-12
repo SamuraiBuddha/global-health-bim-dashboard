@@ -3,8 +3,8 @@ import { Viewer, Entity, PointGraphics, PolygonGraphics, PolylineGraphics } from
 import { Cartesian3, Color, Ion, Terrain, createWorldTerrainAsync } from 'cesium'
 import './CesiumGlobe.css'
 
-// Set your Cesium Ion token (you'll need to get one from https://cesium.com/ion/)
-Ion.defaultAccessToken = 'YOUR_CESIUM_ION_TOKEN'
+// Set your Cesium Ion token from environment variable
+Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN || 'YOUR_CESIUM_ION_TOKEN'
 
 interface CesiumGlobeProps {
   layers: Array<{
