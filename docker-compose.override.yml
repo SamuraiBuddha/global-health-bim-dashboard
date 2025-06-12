@@ -28,21 +28,6 @@ services:
               count: 1
               capabilities: [gpu]
 
-  # Pull initial models for Ollama
-  ollama-init:
-    image: ollama/ollama:latest
-    networks: ['demo']
-    container_name: ollama-pull-models
-    volumes:
-      - ollama_storage:/root/.ollama
-    entrypoint: /bin/sh
-    command:
-      - "-c"
-      - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.2; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
-    depends_on:
-      - ollama
-    profiles: []
-
   # Enable monitoring in development
   prometheus:
     profiles: []  # Enable by default
