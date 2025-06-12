@@ -178,7 +178,7 @@ services:
     image: geodata/cesium-terrain-server:latest
     networks: ['demo']
     ports:
-      - "8000:8000"
+      - "8082:8000"
     volumes:
       - ./data/terrain:/data/terrain:ro
     command: --dir /data/terrain --port 8000
