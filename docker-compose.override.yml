@@ -1,0 +1,58 @@
+# Docker Compose Override for Development
+# This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
+# Use this for local development settings that shouldn't be committed
+
+version: '3.8'
+
+services:
+  # Override PostgreSQL for development
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      # Use the same password as your self-hosted-ai-starter-kit for consistency
+      POSTGRES_PASSWORD: Sup3rBIMgod!
+
+  # Enable n8n by default in development
+  n8n:
+    profiles: []  # Remove profile to always start
+
+  # Ollama for local AI capabilities
+  ollama:
+    profiles: []  # Enable by default
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Pull initial models for Ollama
+  ollama-init:
+    image: ollama/ollama:latest
+    networks: ['demo']
+    container_name: ollama-pull-models
+    volumes:
+      - ollama_storage:/root/.ollama
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.2; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
+    depends_on:
+      - ollama
+    profiles: []
+
+  # Enable monitoring in development
+  prometheus:
+    profiles: []  # Enable by default
+
+  grafana:
+    profiles: []  # Enable by default
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=Sup3rBIMgod!  # Match other passwords
+
+# Development-specific volumes
+volumes:
+  # Add any development-specific volume configurations here
+  dev-cache:
