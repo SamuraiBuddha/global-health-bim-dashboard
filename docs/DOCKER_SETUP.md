@@ -46,7 +46,16 @@ The Docker setup has been configured to match your self-hosted-ai-starter-kit co
    docker-compose up -d
    ```
 
-3. **Start with specific profiles**:
+3. **Initialize Ollama models** (if using AI features):
+   ```bash
+   # Make the script executable
+   chmod +x scripts/init-ollama.sh
+   
+   # Run the initialization
+   ./scripts/init-ollama.sh
+   ```
+
+4. **Start with specific profiles**:
    ```bash
    # Core services only
    docker-compose up -d
@@ -136,6 +145,14 @@ services:
     environment:
       - NEO4J_dbms_memory_heap_max__size=8G
 ```
+
+### Docker Compose Override
+The `docker-compose.override.yml` file is used for local development settings. It:
+- Enables services like n8n, Ollama, and monitoring by default
+- Configures GPU support for AI services
+- Sets consistent passwords across services
+
+If you encounter issues with service dependencies, ensure you're using the latest configuration files from the repository.
 
 ## Data Persistence
 
