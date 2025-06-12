@@ -1,0 +1,33 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Development files
+*.log
+*.tmp
+.DS_Store
+
+# Test files
+*_test.go
+testdata/
+
+# Build artifacts
+*.o
+*.a
+*.so
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Terrain data (will be mounted as volume)
+data/
+terrain/
+*.terrain
