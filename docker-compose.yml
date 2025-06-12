@@ -173,7 +173,7 @@ services:
     profiles:
       - ai
 
-  # Cesium Terrain Server - Port 8000 (modernized local build)
+  # Cesium Terrain Server - Port 8082 (modernized local build)
   cesium-terrain:
     build: 
       context: ./cesium-terrain-server
