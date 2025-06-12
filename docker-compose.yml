@@ -1,27 +1,35 @@
 version: '3.8'
 
+networks:
+  demo:
+    driver: bridge
+
 services:
-  # PostgreSQL with PostGIS
+  # PostgreSQL with PostGIS (matching self-hosted-ai-starter-kit configuration)
   postgres:
-    image: postgis/postgis:15-3.4
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-global_health_dashboard}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./data/schemas/postgres:/docker-entrypoint-initdb.d
+    image: postgis/postgis:16-3.4
+    networks: ['demo']
+    restart: unless-stopped
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Sup3rBIMgod!}
+      POSTGRES_DB: ${POSTGRES_DB:-global_health_dashboard}
+      POSTGRES_MULTIPLE_DATABASES: global_health_dashboard,n8n,kong
+    volumes:
+      - postgres_storage:/var/lib/postgresql/data
+      - ./data/schemas/postgres:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U postgres -d global_health_dashboard']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # InfluxDB for time-series data
   influxdb:
     image: influxdb:2.7
+    networks: ['demo']
     ports:
       - "8086:8086"
     volumes:
@@ -41,23 +49,26 @@ services:
       timeout: 5s
       retries: 5
 
-  # Neo4j graph database
+  # Neo4j graph database (matching self-hosted-ai-starter-kit)
   neo4j:
-    image: neo4j:5
+    image: neo4j:5-community
+    container_name: neo4j
+    networks: ['demo']
+    restart: unless-stopped
     ports:
       - "7474:7474"  # HTTP
       - "7687:7687"  # Bolt
     volumes:
-      - neo4j-data:/data
-      - neo4j-logs:/logs
+      - neo4j_data:/data
+      - neo4j_logs:/logs
       - neo4j-import:/var/lib/neo4j/import
       - neo4j-plugins:/plugins
     environment:
       - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-password123}
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
       - NEO4J_dbms_memory_pagecache_size=2G
       - NEO4J_dbms_memory_heap_max__size=2G
       - NEO4J_dbms_memory_heap_initial__size=1G
-      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --output-document=/dev/null http://localhost:7474 || exit 1"]
       interval: 10s
@@ -67,6 +78,7 @@ services:
   # Redis for caching
   redis:
     image: redis:7-alpine
+    networks: ['demo']
     ports:
       - "6379:6379"
     volumes:
@@ -78,9 +90,21 @@ services:
       timeout: 5s
       retries: 5
 
+  # Qdrant vector database (from self-hosted-ai-starter-kit)
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
   # Kafka for real-time data streaming
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    networks: ['demo']
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -90,6 +114,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:latest
+    networks: ['demo']
     depends_on:
       - zookeeper
     ports:
@@ -111,9 +136,49 @@ services:
       timeout: 10s
       retries: 5
 
+  # n8n workflow automation (integrated from self-hosted-ai-starter-kit)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-dashboard
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-postgres}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-Sup3rBIMgod!}
+      - DB_POSTGRESDB_DATABASE=n8n
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-ThatsaprIesn0ranges}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET:-RumplE&Hobbes}
+    volumes:
+      - n8n_storage:/home/node/.n8n
+      - ./n8n/backup:/backup
+      - ./shared:/data/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Ollama for local LLM (from self-hosted-ai-starter-kit)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    profiles:
+      - ai
+
   # Cesium Terrain Server
   cesium-terrain:
     image: tumgis/cesium-terrain-server
+    networks: ['demo']
     ports:
       - "8000:8000"
     volumes:
@@ -123,6 +188,7 @@ services:
   # API Gateway (Kong)
   kong-database:
     image: postgres:15
+    networks: ['demo']
     environment:
       POSTGRES_USER: kong
       POSTGRES_DB: kong
@@ -137,6 +203,7 @@ services:
 
   kong-migrations:
     image: kong:3.5
+    networks: ['demo']
     command: kong migrations bootstrap
     depends_on:
       kong-database:
@@ -150,6 +217,7 @@ services:
 
   kong:
     image: kong:3.5
+    networks: ['demo']
     depends_on:
       kong-database:
         condition: service_healthy
@@ -181,6 +249,7 @@ services:
     build:
       context: ./src/web
       dockerfile: Dockerfile.dev
+    networks: ['demo']
     ports:
       - "3000:3000"
     volumes:
@@ -193,12 +262,15 @@ services:
     depends_on:
       - kong
     command: npm run dev
+    profiles:
+      - dev
 
   # API Service
   api:
     build:
       context: ./src/services/api
       dockerfile: Dockerfile.dev
+    networks: ['demo']
     ports:
       - "8082:8082"
     volumes:
@@ -215,12 +287,15 @@ services:
       influxdb:
         condition: service_healthy
     command: npm run dev
+    profiles:
+      - dev
 
   # Real-time data processor
   data-processor:
     build:
       context: ./src/workers
       dockerfile: Dockerfile.dev
+    networks: ['demo']
     volumes:
       - ./src/workers:/app
       - /app/node_modules
@@ -233,10 +308,29 @@ services:
         condition: service_healthy
       influxdb:
         condition: service_healthy
+    profiles:
+      - dev
+
+  # LightRAG for knowledge graph (if needed)
+  lightrag:
+    image: lightrag/lightrag:latest
+    networks: ['demo']
+    ports:
+      - "8888:8000"
+    environment:
+      - LIGHTRAG_HOST=${LIGHTRAG_HOST:-lightrag}
+      - LIGHTRAG_PORT=${LIGHTRAG_PORT:-8000}
+      - EMBEDDING_SERVICE=${EMBEDDING_SERVICE:-http://ollama:11434}
+    depends_on:
+      - neo4j
+      - qdrant
+    profiles:
+      - ai
 
   # Monitoring stack (optional for development)
   prometheus:
     image: prom/prometheus:latest
+    networks: ['demo']
     ports:
       - "9090:9090"
     volumes:
@@ -250,6 +344,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    networks: ['demo']
     ports:
       - "3001:3000"
     volumes:
@@ -258,24 +353,27 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel
     depends_on:
       - prometheus
     profiles:
       - monitoring
 
 volumes:
-  postgres-data:
+  postgres_storage:
   influxdb-data:
   influxdb-config:
-  neo4j-data:
-  neo4j-logs:
+  neo4j_data:
+  neo4j_logs:
   neo4j-import:
   neo4j-plugins:
   redis-data:
+  qdrant_storage:
   zookeeper-data:
   zookeeper-logs:
   kafka-data:
   kong-data:
+  n8n_storage:
+  ollama_storage:
   prometheus-data:
   grafana-data:
