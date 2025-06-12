@@ -151,7 +151,7 @@ services:
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_PERSONALIZATION_ENABLED=false
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-ThatsaprIesn0ranges}
-      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET:-RumplE&Hobbes}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET:-Rumple&Hobbes}
     volumes:
       - n8n_storage:/home/node/.n8n
       - ./n8n/backup:/backup
@@ -173,9 +173,11 @@ services:
     profiles:
       - ai
 
-  # Cesium Terrain Server - Port 8000
+  # Cesium Terrain Server - Port 8000 (modernized local build)
   cesium-terrain:
-    image: geodata/cesium-terrain-server:latest
+    build: 
+      context: ./cesium-terrain-server
+      dockerfile: docker/Dockerfile
     networks: ['demo']
     ports:
       - "8082:8000"
