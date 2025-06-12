@@ -175,13 +175,11 @@ services:
 
   # Cesium Terrain Server
   cesium-terrain:
-    image: tumgis/cesium-terrain-server
-    networks: ['demo']
+    image: cleder/cesium-terrain-server:latest
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
-      - ./data/terrain:/data/terrain:ro
-    command: --dir /data/terrain --port 8000
+      - ./path/to/tiles:/data/tilesets/terrain
 
   # API Gateway (Kong)
   kong-database:
