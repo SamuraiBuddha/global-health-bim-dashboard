@@ -185,9 +185,11 @@ services:
       - ./data/terrain:/data/terrain:ro
     command: --dir /data/terrain --port 8000
 
-  # Cesium Terrain Server 2 - Port 8083 for Global Health Model
+  # Cesium Terrain Server 2 - Port 8083 for Global Health Model (modernized local build)
   cesium-terrain-ghm:
-    image: geodata/cesium-terrain-server:latest
+    build:
+      context: ./cesium-terrain-server
+      dockerfile: docker/Dockerfile
     container_name: cesium-terrain-ghm
     networks: ['demo']
     ports:
