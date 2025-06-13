@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Global Health BIM Dashboard - 3D Earth Viewer</title>
+  
+  <!-- Include Cesium from CDN -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.106/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.106/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+    
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .layer-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(42, 42, 42, 0.8);
+      padding: 15px;
+      border-radius: 5px;
+      color: white;
+      max-width: 300px;
+    }
+    
+    .control-group {
+      margin-bottom: 15px;
+    }
+    
+    .control-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .control-group select,
+    .control-group button {
+      width: 100%;
+      padding: 5px;
+      background: #48b;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    .control-group button {
+      margin-bottom: 5px;
+    }
+    
+    .control-group button:hover,
+    .control-group select:hover {
+      background: #5ac;
+    }
+    
+    .asset-info {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      color: white;
+      font-size: 12px;
+    }
+
+    .health-data-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(42, 42, 42, 0.9);
+      padding: 15px;
+      border-radius: 5px;
+      color: white;
+      max-width: 350px;
+    }
+
+    .health-indicator {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    .health-indicator h4 {
+      margin: 0 0 5px 0;
+      color: #5ac;
+    }
+
+    .health-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .health-status {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .status-good { color: #4f8; }
+    .status-warning { color: #fa4; }
+    .status-critical { color: #f44; }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  
+  <div class="health-data-panel">
+    <h3>Global Health Indicators</h3>
+    <div class="health-indicator">
+      <h4>Sea Level Rise</h4>
+      <div class="health-value status-warning">+3.4mm/year</div>
+      <div class="health-status">Above 20-year average</div>
+    </div>
+    <div class="health-indicator">
+      <h4>Active Conflicts</h4>
+      <div class="health-value status-critical">32 regions</div>
+      <div class="health-status">12% increase from 2024</div>
+    </div>
+    <div class="health-indicator">
+      <h4>Food Security</h4>
+      <div class="health-value status-warning">828M affected</div>
+      <div class="health-status">10.5% global population</div>
+    </div>
+    <div class="health-indicator">
+      <h4>Seismic Activity</h4>
+      <div class="health-value status-good">Normal</div>
+      <div class="health-status">No significant anomalies</div>
+    </div>
+  </div>
+  
+  <div class="layer-controls">
+    <h3>Layer Controls</h3>
+    
+    <div class="control-group">
+      <label>Terrain:</label>
+      <select id="terrainSelect">
+        <option value="world">Cesium World Terrain</option>
+        <option value="bathymetry">World Bathymetry</option>
+        <option value="moon">Moon Terrain</option>
+        <option value="ellipsoid">Flat (Ellipsoid)</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label>Base Imagery:</label>
+      <select id="imagerySelect">
+        <option value="bingAerial">Bing Aerial</option>
+        <option value="bingAerialWithLabels">Bing Aerial with Labels</option>
+        <option value="bingRoad">Bing Roads</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label>3D Buildings:</label>
+      <button id="toggleOSMBuildings">Toggle OSM Buildings</button>
+      <button id="toggleGooglePhotorealistic">Toggle Google Photorealistic 3D</button>
+    </div>
+    
+    <div class="control-group">
+      <label>Overlay Layers:</label>
+      <button id="toggleSentinel2">Toggle Sentinel-2</button>
+      <button id="toggleEarthAtNight">Toggle Earth at Night</button>
+    </div>
+  </div>
+  
+  <div class="asset-info">
+    <p><strong>Your Cesium Ion Assets:</strong></p>
+    <p>Moon Terrain (ID: 2684829)<br>
+    OSM Buildings (ID: 2521176)<br>
+    World Bathymetry (ID: 2426648)<br>
+    Google Photorealistic 3D (ID: 2275207)<br>
+    Sentinel-2 (ID: 3954)<br>
+    Earth at Night (ID: 3812)</p>
+  </div>
+
+  <script type="module">
+    // Import the configuration
+    import { 
+      CESIUM_ASSETS, 
+      switchTerrain, 
+      switchBaseImagery,
+      addOSMBuildings,
+      addGooglePhotorealistic3DTiles,
+      addSentinel2Imagery,
+      addEarthAtNightImagery
+    } from './cesium-assets-config.js';
+    
+    // Get the token from environment or use placeholder
+    const cesiumToken = window.CESIUM_ION_TOKEN || 'YOUR_CESIUM_ION_ACCESS_TOKEN';
+    Cesium.Ion.defaultAccessToken = cesiumToken;
+    
+    // Initialize viewer
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: Cesium.createWorldTerrain({
+        requestWaterMask: true,
+        requestVertexNormals: true
+      }),
+      imageryProvider: new Cesium.IonImageryProvider({ assetId: CESIUM_ASSETS.bingMapsAerial }),
+      shadows: true,
+      shouldAnimate: true,
+      timeline: false,
+      animation: false,
+      homeButton: true,
+      sceneModePicker: true,
+      baseLayerPicker: false,
+      navigationHelpButton: true,
+      geocoder: true,
+      fullscreenButton: true
+    });
+    
+    // Store references to tilesets and imagery layers
+    let osmBuildingsTileset = null;
+    let googlePhotorealisticTileset = null;
+    let sentinel2Layer = null;
+    let earthAtNightLayer = null;
+    
+    // Terrain switching
+    document.getElementById('terrainSelect').addEventListener('change', function(e) {
+      switchTerrain(e.target.value);
+      if (e.target.value === 'moon') {
+        viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.MOON;
+      } else {
+        viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.WGS84;
+      }
+    });
+    
+    // Base imagery switching
+    document.getElementById('imagerySelect').addEventListener('change', function(e) {
+      switchBaseImagery(e.target.value);
+    });
+    
+    // OSM Buildings toggle
+    document.getElementById('toggleOSMBuildings').addEventListener('click', function() {
+      if (osmBuildingsTileset) {
+        viewer.scene.primitives.remove(osmBuildingsTileset);
+        osmBuildingsTileset = null;
+      } else {
+        addOSMBuildings();
+      }
+    });
+    
+    // Google Photorealistic 3D toggle
+    document.getElementById('toggleGooglePhotorealistic').addEventListener('click', function() {
+      if (googlePhotorealisticTileset) {
+        viewer.scene.primitives.remove(googlePhotorealisticTileset);
+        googlePhotorealisticTileset = null;
+      } else {
+        addGooglePhotorealistic3DTiles();
+      }
+    });
+    
+    // Sentinel-2 toggle
+    document.getElementById('toggleSentinel2').addEventListener('click', function() {
+      if (sentinel2Layer) {
+        viewer.imageryLayers.remove(sentinel2Layer);
+        sentinel2Layer = null;
+      } else {
+        addSentinel2Imagery();
+      }
+    });
+    
+    // Earth at Night toggle
+    document.getElementById('toggleEarthAtNight').addEventListener('click', function() {
+      if (earthAtNightLayer) {
+        viewer.imageryLayers.remove(earthAtNightLayer);
+        earthAtNightLayer = null;
+      } else {
+        addEarthAtNightImagery();
+      }
+    });
+    
+    // Add some example health crisis locations
+    const healthCrisisLocations = [
+      { name: "Bangladesh Flooding", lon: 90.4125, lat: 23.8103, height: 100, type: "flood" },
+      { name: "California Wildfire Zone", lon: -120.7401, lat: 38.5816, height: 1000, type: "fire" },
+      { name: "East Africa Drought", lon: 38.7578, lat: 9.0320, height: 500, type: "drought" },
+      { name: "Pacific Typhoon Path", lon: 125.5, lat: 15.0, height: 100, type: "storm" },
+      { name: "Antarctic Ice Shelf", lon: -60.0, lat: -75.0, height: 500, type: "climate" }
+    ];
+    
+    // Add markers for health crisis locations
+    healthCrisisLocations.forEach(location => {
+      let color;
+      switch(location.type) {
+        case 'flood': color = Cesium.Color.BLUE; break;
+        case 'fire': color = Cesium.Color.RED; break;
+        case 'drought': color = Cesium.Color.ORANGE; break;
+        case 'storm': color = Cesium.Color.PURPLE; break;
+        case 'climate': color = Cesium.Color.CYAN; break;
+        default: color = Cesium.Color.YELLOW;
+      }
+      
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(location.lon, location.lat, location.height),
+        point: {
+          pixelSize: 10,
+          color: color,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 2,
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+        },
+        label: {
+          text: location.name,
+          font: '14pt sans-serif',
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          outlineWidth: 2,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -15)
+        }
+      });
+    });
+    
+    // Set initial camera view
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(0, 20, 15000000)
+    });
+    
+    // Add atmosphere and fog for better visualization
+    viewer.scene.globe.showGroundAtmosphere = true;
+    viewer.scene.fog.enabled = true;
+    viewer.scene.fog.density = 0.0001;
+    viewer.scene.fog.screenSpaceErrorFactor = 2;
+    
+    // Enable better performance settings
+    viewer.scene.debugShowFramesPerSecond = false;
+    viewer.scene.requestRenderMode = true;
+    viewer.scene.maximumRenderTimeChange = Infinity;
+    
+    // Make viewer accessible globally for debugging
+    window.viewer = viewer;
+  </script>
+</body>
+</html>
