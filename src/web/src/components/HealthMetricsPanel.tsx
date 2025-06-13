@@ -8,6 +8,13 @@ interface Metric {
   severity: 'critical' | 'warning' | 'normal'
 }
 
+interface Alert {
+  time: string
+  text: string
+  severity: 'critical' | 'warning'
+  url?: string
+}
+
 function HealthMetricsPanel() {
   const [metrics, setMetrics] = useState<Metric[]>([
     { name: 'Global Hunger Index', value: '18.2', trend: 'down', severity: 'warning' },
@@ -18,6 +25,27 @@ function HealthMetricsPanel() {
     { name: 'Sea Level Rise', value: '+3.4mm/yr', trend: 'up', severity: 'warning' },
     { name: 'Forest Coverage', value: '31%', trend: 'down', severity: 'warning' },
     { name: 'Species at Risk', value: '42,100', trend: 'up', severity: 'critical' },
+  ])
+
+  const [alerts, setAlerts] = useState<Alert[]>([
+    { 
+      time: '10:23', 
+      text: 'Earthquake M6.2 detected in Pacific Ring', 
+      severity: 'critical',
+      url: 'https://earthquake.usgs.gov/earthquakes/map/'
+    },
+    { 
+      time: '09:45', 
+      text: 'Water stress levels critical in Sub-Saharan region', 
+      severity: 'warning',
+      url: 'https://www.wri.org/aqueduct/'
+    },
+    { 
+      time: '08:30', 
+      text: 'Air quality degraded in Southeast Asia - AQI 180+', 
+      severity: 'warning',
+      url: 'https://aqicn.org/map/world/'
+    },
   ])
 
   const getSeverityColor = (severity: string) => {
@@ -35,6 +63,12 @@ function HealthMetricsPanel() {
       case 'down': return '↓'
       case 'stable': return '→'
       default: return ''
+    }
+  }
+
+  const handleAlertClick = (url?: string) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -57,18 +91,20 @@ function HealthMetricsPanel() {
       
       <div className="alerts-section">
         <h3>Recent Alerts</h3>
-        <div className="alert-item critical">
-          <span className="alert-time">10:23</span>
-          <span className="alert-text">Earthquake M6.2 detected in Pacific Ring</span>
-        </div>
-        <div className="alert-item warning">
-          <span className="alert-time">09:45</span>
-          <span className="alert-text">Water stress levels critical in Sub-Saharan region</span>
-        </div>
-        <div className="alert-item warning">
-          <span className="alert-time">08:30</span>
-          <span className="alert-text">Air quality degraded in Southeast Asia - AQI 180+</span>
-        </div>
+        {alerts.map((alert, index) => (
+          <div 
+            key={index} 
+            className={`alert-item ${alert.severity} ${alert.url ? 'clickable' : ''}`}
+            onClick={() => handleAlertClick(alert.url)}
+            style={{ cursor: alert.url ? 'pointer' : 'default' }}
+          >
+            <span className="alert-time">{alert.time}</span>
+            <span className="alert-text">
+              {alert.text}
+              {alert.url && <span className="alert-link-icon"> 🔗</span>}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )
