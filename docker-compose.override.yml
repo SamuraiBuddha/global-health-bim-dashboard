@@ -32,10 +32,10 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=Sup3rBIMgod! # Match other passwords
 
-  # Override frontend port to avoid conflict
+  # Override frontend port to avoid conflicts
   frontend:
     ports:
-      - "3001:3000"  # Map to port 3001 on host instead of 3000
+      - "3002:3000"  # Map to port 3002 on host (3000 is Grafana, 3001 is docker Grafana)
 
 # Development-specific volumes
 volumes:
