@@ -217,6 +217,39 @@ services:
       - cesium-terrain-ghm
       - kong
 
+  # Unreal Engine Pixel Streaming - High Quality BIM Visualization
+  unreal-pixel-streaming:
+    build:
+      context: ./unreal-pixel-streaming
+      dockerfile: Dockerfile
+    container_name: unreal-pixel-streaming
+    networks: ['demo']
+    runtime: nvidia
+    ports:
+      - "8090:80"        # Web interface
+      - "8888:8888"      # WebSocket signaling
+      - "19302-19303:19302-19303/udp"  # STUN/TURN
+    volumes:
+      - ./data/unreal-projects:/app/project
+      - ./data/revit-models:/app/datasmith
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0  # Use RTX 3090
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - DISPLAY=:99
+      - RENDER_QUALITY=Ultra
+      - PIXEL_STREAMING_ENCODER_TARGET_BITRATE=20000000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      - kong
+    profiles:
+      - unreal
+
   # API Gateway (Kong)
   kong-database:
     image: postgres:15
@@ -292,9 +325,11 @@ services:
       - REACT_APP_API_URL=http://localhost:8080
       - REACT_APP_WS_URL=ws://localhost:8081
       - REACT_APP_CESIUM_ION_TOKEN=${CESIUM_ION_TOKEN:-your_cesium_ion_token_here}
+      - REACT_APP_UNREAL_STREAM_URL=http://localhost:8090
     depends_on:
       - kong
       - cesium-viewer
+      - unreal-pixel-streaming
     command: npm run dev
     profiles:
       - dev
