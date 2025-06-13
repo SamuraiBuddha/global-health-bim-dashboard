@@ -7,7 +7,7 @@ import {
   Terrain, 
   createWorldTerrainAsync,
   CesiumTerrainProvider,
-  BingMapsImageryProvider,
+  UrlTemplateImageryProvider,
   IonResource,
   ArcGisMapServerImageryProvider
 } from 'cesium'
@@ -28,7 +28,7 @@ interface CesiumGlobeProps {
 interface TerrainOption {
   id: string
   name: string
-  type: 'ion' | 'custom' | 'bing' | 'none'
+  type: 'ion' | 'custom' | 'azure' | 'none'
   url?: string
   assetId?: number
   key?: string
@@ -37,6 +37,7 @@ interface TerrainOption {
 function CesiumGlobe({ layers }: CesiumGlobeProps) {
   const [terrainProvider, setTerrainProvider] = useState<any>(null)
   const [selectedTerrain, setSelectedTerrain] = useState<string>('cesium-world')
+  const [azureImageryProvider, setAzureImageryProvider] = useState<any>(null)
   
   // Terrain options
   const terrainOptions: TerrainOption[] = [
@@ -45,12 +46,26 @@ function CesiumGlobe({ layers }: CesiumGlobeProps) {
     { id: 'cesium-ion-2', name: 'Cesium Ion Terrain (Asset 2)', type: 'ion', assetId: 2 },
     { id: 'local-terrain-1', name: 'Local Terrain Server (8082)', type: 'custom', url: 'http://localhost:8082/tilesets/terrain' },
     { id: 'local-terrain-2', name: 'Global Health Model Terrain (8083)', type: 'custom', url: 'http://localhost:8083/tilesets/terrain' },
-    { id: 'bing-terrain', name: 'Bing Maps Terrain', type: 'bing', key: import.meta.env.VITE_BING_MAPS_KEY }
+    { id: 'azure-maps', name: 'Azure Maps (Imagery Only)', type: 'azure', key: import.meta.env.VITE_AZURE_MAPS_KEY }
   ]
 
   useEffect(() => {
     loadTerrain(selectedTerrain)
+    setupAzureImagery()
   }, [selectedTerrain])
+
+  const setupAzureImagery = () => {
+    const azureKey = import.meta.env.VITE_AZURE_MAPS_KEY
+    if (azureKey) {
+      // Azure Maps imagery provider
+      const azureProvider = new UrlTemplateImageryProvider({
+        url: `https://atlas.microsoft.com/map/tile?api-version=2.0&tilesetId=microsoft.imagery&zoom={z}&x={x}&y={y}&subscription-key=${azureKey}`,
+        credit: 'Azure Maps',
+        maximumLevel: 19
+      })
+      setAzureImageryProvider(azureProvider)
+    }
+  }
 
   const loadTerrain = async (terrainId: string) => {
     const option = terrainOptions.find(t => t.id === terrainId)
@@ -90,11 +105,10 @@ function CesiumGlobe({ layers }: CesiumGlobeProps) {
           setTerrainProvider(provider)
           break
 
-        case 'bing':
-          // Note: Bing doesn't provide terrain, only imagery
-          // You might want to combine this with another terrain provider
-          console.warn('Bing Maps provides imagery, not terrain. Using flat terrain.')
-          setTerrainProvider(null)
+        case 'azure':
+          // Azure Maps doesn't provide terrain, only imagery
+          // Keep existing terrain and note this in the UI
+          console.info('Azure Maps provides imagery only. Terrain remains unchanged.')
           break
       }
     } catch (error) {
