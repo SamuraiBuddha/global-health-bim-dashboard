@@ -266,7 +266,7 @@ services:
       dockerfile: Dockerfile.dev
     networks: ['demo']
     ports:
-      - "3000:3000"
+      - "3002:3000"
     volumes:
       - ./src/web:/app
       - /app/node_modules
