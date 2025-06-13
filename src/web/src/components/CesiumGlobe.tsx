@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Viewer, Entity, PointGraphics, PolygonGraphics, PolylineGraphics } from 'resium'
-import { Cartesian3, Color, Ion, Terrain, createWorldTerrainAsync } from 'cesium'
+import { 
+  Cartesian3, 
+  Color, 
+  Ion, 
+  Terrain, 
+  createWorldTerrainAsync,
+  CesiumTerrainProvider,
+  BingMapsImageryProvider,
+  IonResource,
+  ArcGisMapServerImageryProvider
+} from 'cesium'
 import './CesiumGlobe.css'
 
 // Set your Cesium Ion token from environment variable
@@ -15,17 +25,85 @@ interface CesiumGlobeProps {
   }>
 }
 
+interface TerrainOption {
+  id: string
+  name: string
+  type: 'ion' | 'custom' | 'bing' | 'none'
+  url?: string
+  assetId?: number
+  key?: string
+}
+
 function CesiumGlobe({ layers }: CesiumGlobeProps) {
-  const [terrainProvider, setTerrainProvider] = useState<Terrain | null>(null)
+  const [terrainProvider, setTerrainProvider] = useState<any>(null)
+  const [selectedTerrain, setSelectedTerrain] = useState<string>('cesium-world')
+  
+  // Terrain options
+  const terrainOptions: TerrainOption[] = [
+    { id: 'none', name: 'No Terrain', type: 'none' },
+    { id: 'cesium-world', name: 'Cesium World Terrain', type: 'ion', assetId: 1 },
+    { id: 'cesium-ion-2', name: 'Cesium Ion Terrain (Asset 2)', type: 'ion', assetId: 2 },
+    { id: 'local-terrain-1', name: 'Local Terrain Server (8082)', type: 'custom', url: 'http://localhost:8082/tilesets/terrain' },
+    { id: 'local-terrain-2', name: 'Global Health Model Terrain (8083)', type: 'custom', url: 'http://localhost:8083/tilesets/terrain' },
+    { id: 'bing-terrain', name: 'Bing Maps Terrain', type: 'bing', key: import.meta.env.VITE_BING_MAPS_KEY }
+  ]
 
   useEffect(() => {
-    // Load world terrain
-    createWorldTerrainAsync().then(terrain => {
-      setTerrainProvider(terrain)
-    })
-  }, [])
+    loadTerrain(selectedTerrain)
+  }, [selectedTerrain])
 
-  // Example entities for different layer types
+  const loadTerrain = async (terrainId: string) => {
+    const option = terrainOptions.find(t => t.id === terrainId)
+    if (!option) return
+
+    try {
+      let provider = null
+
+      switch (option.type) {
+        case 'none':
+          setTerrainProvider(null)
+          break
+
+        case 'ion':
+          if (option.assetId === 1) {
+            // Use Cesium World Terrain
+            provider = await createWorldTerrainAsync({
+              requestWaterMask: true,
+              requestVertexNormals: true
+            })
+          } else {
+            // Use custom Ion asset
+            provider = await CesiumTerrainProvider.fromIonAssetId(option.assetId!, {
+              requestWaterMask: true,
+              requestVertexNormals: true
+            })
+          }
+          setTerrainProvider(provider)
+          break
+
+        case 'custom':
+          // Use custom terrain server
+          provider = await CesiumTerrainProvider.fromUrl(option.url!, {
+            requestWaterMask: true,
+            requestVertexNormals: true
+          })
+          setTerrainProvider(provider)
+          break
+
+        case 'bing':
+          // Note: Bing doesn't provide terrain, only imagery
+          // You might want to combine this with another terrain provider
+          console.warn('Bing Maps provides imagery, not terrain. Using flat terrain.')
+          setTerrainProvider(null)
+          break
+      }
+    } catch (error) {
+      console.error('Error loading terrain:', error)
+      setTerrainProvider(null)
+    }
+  }
+
+  // Example entities for different layer types (keeping existing code)
   const renderEntities = () => {
     const entities = []
 
@@ -269,10 +347,24 @@ function CesiumGlobe({ layers }: CesiumGlobeProps) {
 
   return (
     <div className="cesium-container">
+      <div className="terrain-selector">
+        <label>Terrain Provider:</label>
+        <select 
+          value={selectedTerrain} 
+          onChange={(e) => setSelectedTerrain(e.target.value)}
+        >
+          {terrainOptions.map(option => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      
       <Viewer
         full
-        terrainProvider={terrainProvider || undefined}
-        baseLayerPicker={false}
+        terrainProvider={terrainProvider}
+        baseLayerPicker={true}
         geocoder={true}
         homeButton={true}
         sceneModePicker={true}
@@ -281,6 +373,7 @@ function CesiumGlobe({ layers }: CesiumGlobeProps) {
         timeline={true}
         fullscreenButton={true}
         vrButton={false}
+        imageryProvider={false} // Let user choose via baseLayerPicker
       >
         {renderEntities()}
       </Viewer>
