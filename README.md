@@ -25,13 +25,31 @@ Inspired by Samsung's Global Goals app (300M+ users, $17M+ raised), users genera
 - Direct contributions for immediate deployment
 
 ### Bipedal Robot Fleet
-- **Primary Model**: Unitree G1 humanoid robots ($16,000 per unit)
+
+#### Primary Options:
+- **Unitree G1 Humanoid** ($16,000 per unit)
   - 127cm tall, 35kg weight, 2m/s walking speed
   - 2-hour battery with quick-swap capability
   - 23-43 degrees of freedom for complex tasks
   - Can handle debris clearing, sorting, and basic construction
-- **Alternative Options**: Engine AI PM01 ($13,000), Neura 4NE-1 ($15,000-$45,000)
-- **Solar-Powered Charging Stations**: Sustainable field operations
+
+- **EngineAI PM01 Open-Source** ($25,500 commercial / $39,500 education) - **NEW**
+  - **OPEN-SOURCE ADVANTAGE**: Community can directly implement improvements
+  - Perfect for crowdsourced training modifications
+  - Direct path from game strategies to robot code
+  - No corporate gatekeeping of improvements
+
+- **EngineAI S2 "Hero Robot"** (Coming Soon) - **NEW**
+  - Distinctive red design with LED "eyes" and rabbit-ear antennas
+  - Iconic appearance perfect for player recognition
+  - Ideal for premium skin/cosmetic system
+  - Built-in Chinese market appeal (中国众擎 branding)
+
+#### Dual Fleet Strategy:
+- **PM01s**: The workhorses - open-source, community-modified, mass deployment
+- **S2s**: The heroes - distinctive units that players aspire to control
+- Different price points = different donation/gameplay tiers
+- Solar-Powered Charging Stations for sustainable field operations
 
 ### Gamification & Training System
 
@@ -266,6 +284,7 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup instructions.
 
 ### Robot Operations
 - Unitree Robotics (Hardware telemetry)
+- EngineAI (Open-source robot data) - **NEW**
 - Community training data (Gameplay strategies)
 - Field performance metrics
 - Environmental sensor arrays
@@ -288,22 +307,22 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup instructions.
 ```
 global-health-bim-dashboard/
 ├── src/
-│   ├── core/           # Rust core engine
-│   ├── services/       # Microservices
-│   ├── web/           # Frontend application
-│   ├── workers/       # Background processing
-│   ├── robot-control/ # Robot coordination system
-│   ├── vr-training/   # Unreal Engine VR games
-│   └── ml-pipeline/   # Training data processing
+│   ├── core/            # Rust core engine
+│   ├── services/        # Microservices
+│   ├── web/             # Frontend application
+│   ├── workers/         # Background processing
+│   ├── robot-control/   # Robot coordination system
+│   ├── vr-training/     # Unreal Engine VR games
+│   └── ml-pipeline/     # Training data processing
 ├── data/
-│   ├── schemas/       # Database schemas
-│   ├── migrations/    # Database migrations
-│   ├── seeds/        # Sample data
-│   └── training/     # Robot behavior datasets
-├── docs/             # Documentation
-├── scripts/          # Utility scripts
-├── tests/           # Test suites
-└── docker/          # Docker configurations
+│   ├── schemas/         # Database schemas
+│   ├── migrations/      # Database migrations
+│   ├── seeds/           # Sample data
+│   └── training/        # Robot behavior datasets
+├── docs/                # Documentation
+├── scripts/             # Utility scripts
+├── tests/               # Test suites
+└── docker/              # Docker configurations
 ```
 
 ## Integration with self-hosted-ai-starter-kit
@@ -325,7 +344,7 @@ See [Docker Setup Guide](docs/DOCKER_SETUP.md) for detailed integration instruct
 - Prove humanitarian impact model
 
 ### Phase 2: Strategic Partnerships
-- Collaborate with robot manufacturers (Unitree, Tesla, Boston Dynamics)
+- Collaborate with robot manufacturers (Unitree, EngineAI, Tesla, Boston Dynamics)
 - License training data and deployment platform
 - Co-develop specialized humanitarian robots
 
@@ -349,6 +368,7 @@ Special areas seeking contributors:
 - ML training pipelines
 - BIM integration specialists
 - Humanitarian logistics experts
+- Open-source robot modifications (EngineAI PM01)
 
 ## License
 
@@ -360,6 +380,7 @@ This project builds on the vision of creating next-generation BIM software while
 - The open-source community and data providers making this work possible
 - Samsung Global Goals for proving the scroll-to-donate model
 - Unitree Robotics for affordable humanoid platforms
+- EngineAI for embracing open-source robotics
 - The gaming community for turning training into entertainment
 - All future players who will help train our humanitarian robot army
 
