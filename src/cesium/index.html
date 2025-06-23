@@ -113,6 +113,20 @@
     .status-good { color: #4f8; }
     .status-warning { color: #fa4; }
     .status-critical { color: #f44; }
+
+    .token-warning {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      text-align: center;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
@@ -187,21 +201,33 @@
     Earth at Night (ID: 3812)</p>
   </div>
 
-  <script type="module">
-    // Import the configuration
-    import { 
-      CESIUM_ASSETS, 
-      switchTerrain, 
-      switchBaseImagery,
-      addOSMBuildings,
-      addGooglePhotorealistic3DTiles,
-      addSentinel2Imagery,
-      addEarthAtNightImagery
-    } from './cesium-assets-config.js';
+  <script type="text/javascript">
+    // Configuration - REPLACE WITH YOUR ACTUAL TOKEN
+    // This should be injected by your build process or environment
+    const CESIUM_ION_TOKEN = 'YOUR_CESIUM_ION_ACCESS_TOKEN';
     
-    // Get the token from environment or use placeholder
-    const cesiumToken = window.CESIUM_ION_TOKEN || 'YOUR_CESIUM_ION_ACCESS_TOKEN';
-    Cesium.Ion.defaultAccessToken = cesiumToken;
+    // Asset IDs from your Cesium Ion account
+    const CESIUM_ASSETS = {
+      cesiumMoonTerrain: 2684829,
+      cesiumOSMBuildings: 2521176,
+      cesiumWorldBathymetry: 2426648,
+      googlePhotorealistic3DTiles: 2275207,
+      cesiumOSMBuildingsAlternate: 96188,
+      sentinel2: 3954,
+      earthAtNight: 3812,
+      bingMapsRoad: 4,
+      bingMapsAerialWithLabels: 3,
+      bingMapsAerial: 2,
+      cesiumWorldTerrain: 1
+    };
+
+    // Check if token is set
+    if (CESIUM_ION_TOKEN === 'YOUR_CESIUM_ION_ACCESS_TOKEN') {
+      document.body.innerHTML += '<div class="token-warning">⚠️ Cesium Ion Token Not Set!<br><br>Please set your Cesium Ion access token in the .env file and restart the docker container.<br><br>CESIUM_ION_TOKEN=your_actual_token_here</div>';
+    }
+
+    // Set the default access token
+    Cesium.Ion.defaultAccessToken = CESIUM_ION_TOKEN;
     
     // Initialize viewer
     const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -228,22 +254,123 @@
     let sentinel2Layer = null;
     let earthAtNightLayer = null;
     
-    // Terrain switching
+    // Function to switch terrain
+    function switchTerrain(terrainType) {
+      switch(terrainType) {
+        case 'world':
+          viewer.terrainProvider = Cesium.createWorldTerrain({
+            requestWaterMask: true,
+            requestVertexNormals: true
+          });
+          viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.WGS84;
+          break;
+        case 'bathymetry':
+          viewer.terrainProvider = new Cesium.CesiumTerrainProvider({
+            url: Cesium.IonResource.fromAssetId(CESIUM_ASSETS.cesiumWorldBathymetry),
+            requestWaterMask: true,
+            requestVertexNormals: true
+          });
+          viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.WGS84;
+          break;
+        case 'moon':
+          viewer.terrainProvider = new Cesium.CesiumTerrainProvider({
+            url: Cesium.IonResource.fromAssetId(CESIUM_ASSETS.cesiumMoonTerrain),
+            requestVertexNormals: true
+          });
+          viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.MOON;
+          break;
+        case 'ellipsoid':
+          viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+          viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.WGS84;
+          break;
+      }
+    }
+    
+    // Function to switch base imagery
+    function switchBaseImagery(imageryType) {
+      viewer.imageryLayers.removeAll();
+      
+      switch(imageryType) {
+        case 'bingAerial':
+          viewer.imageryLayers.addImageryProvider(
+            new Cesium.IonImageryProvider({ assetId: CESIUM_ASSETS.bingMapsAerial })
+          );
+          break;
+        case 'bingAerialWithLabels':
+          viewer.imageryLayers.addImageryProvider(
+            new Cesium.IonImageryProvider({ assetId: CESIUM_ASSETS.bingMapsAerialWithLabels })
+          );
+          break;
+        case 'bingRoad':
+          viewer.imageryLayers.addImageryProvider(
+            new Cesium.IonImageryProvider({ assetId: CESIUM_ASSETS.bingMapsRoad })
+          );
+          break;
+      }
+    }
+    
+    // Function to add OSM Buildings
+    function addOSMBuildings() {
+      osmBuildingsTileset = viewer.scene.primitives.add(
+        new Cesium.Cesium3DTileset({
+          url: Cesium.IonResource.fromAssetId(CESIUM_ASSETS.cesiumOSMBuildings),
+          skipLevelOfDetail: true,
+          baseScreenSpaceError: 1024,
+          skipScreenSpaceErrorFactor: 16,
+          skipLevels: 1,
+          immediatelyLoadDesiredLevelOfDetail: false,
+          loadSiblings: false,
+          cullWithChildrenBounds: true
+        })
+      );
+    }
+    
+    // Function to add Google Photorealistic 3D
+    function addGooglePhotorealistic3D() {
+      googlePhotorealisticTileset = viewer.scene.primitives.add(
+        new Cesium.Cesium3DTileset({
+          url: Cesium.IonResource.fromAssetId(CESIUM_ASSETS.googlePhotorealistic3DTiles),
+          skipLevelOfDetail: true,
+          baseScreenSpaceError: 1024,
+          skipScreenSpaceErrorFactor: 16,
+          skipLevels: 1,
+          immediatelyLoadDesiredLevelOfDetail: false,
+          loadSiblings: false,
+          cullWithChildrenBounds: true,
+          dynamicScreenSpaceError: true,
+          dynamicScreenSpaceErrorDensity: 0.00278,
+          dynamicScreenSpaceErrorFactor: 4.0,
+          dynamicScreenSpaceErrorHeightFalloff: 0.25
+        })
+      );
+    }
+    
+    // Function to add Sentinel-2
+    function addSentinel2() {
+      sentinel2Layer = viewer.imageryLayers.addImageryProvider(
+        new Cesium.IonImageryProvider({ assetId: CESIUM_ASSETS.sentinel2 })
+      );
+      sentinel2Layer.alpha = 0.5;
+    }
+    
+    // Function to add Earth at Night
+    function addEarthAtNight() {
+      earthAtNightLayer = viewer.imageryLayers.addImageryProvider(
+        new Cesium.IonImageryProvider({ assetId: CESIUM_ASSETS.earthAtNight })
+      );
+      earthAtNightLayer.dayAlpha = 0.0;
+      earthAtNightLayer.nightAlpha = 1.0;
+    }
+    
+    // Event listeners
     document.getElementById('terrainSelect').addEventListener('change', function(e) {
       switchTerrain(e.target.value);
-      if (e.target.value === 'moon') {
-        viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.MOON;
-      } else {
-        viewer.scene.globe.ellipsoid = Cesium.Ellipsoid.WGS84;
-      }
     });
     
-    // Base imagery switching
     document.getElementById('imagerySelect').addEventListener('change', function(e) {
       switchBaseImagery(e.target.value);
     });
     
-    // OSM Buildings toggle
     document.getElementById('toggleOSMBuildings').addEventListener('click', function() {
       if (osmBuildingsTileset) {
         viewer.scene.primitives.remove(osmBuildingsTileset);
@@ -253,33 +380,30 @@
       }
     });
     
-    // Google Photorealistic 3D toggle
     document.getElementById('toggleGooglePhotorealistic').addEventListener('click', function() {
       if (googlePhotorealisticTileset) {
         viewer.scene.primitives.remove(googlePhotorealisticTileset);
         googlePhotorealisticTileset = null;
       } else {
-        addGooglePhotorealistic3DTiles();
+        addGooglePhotorealistic3D();
       }
     });
     
-    // Sentinel-2 toggle
     document.getElementById('toggleSentinel2').addEventListener('click', function() {
       if (sentinel2Layer) {
         viewer.imageryLayers.remove(sentinel2Layer);
         sentinel2Layer = null;
       } else {
-        addSentinel2Imagery();
+        addSentinel2();
       }
     });
     
-    // Earth at Night toggle
     document.getElementById('toggleEarthAtNight').addEventListener('click', function() {
       if (earthAtNightLayer) {
         viewer.imageryLayers.remove(earthAtNightLayer);
         earthAtNightLayer = null;
       } else {
-        addEarthAtNightImagery();
+        addEarthAtNight();
       }
     });
     
